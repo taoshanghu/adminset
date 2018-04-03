@@ -138,6 +138,7 @@ def delivery_deploy(request, project_id):
         server_list.append(server_ip)
     project.bar_data = 15
     deploy_out = new_deploy(job_name, server_list, app_path, source_address, project_id, auth_info)
+    print deploy_out
     if deploy_out[0] != "1":
         return HttpResponse("ok")
     else:
@@ -189,3 +190,14 @@ def task_stop(request, project_id):
     project.status = False
     project.save()
     return HttpResponse("task stop ok")
+
+@login_required()
+@permission_verify()
+def delivery_hueigun(request,project_id):
+    temp_name = "delivery/delivery-header.html"
+    all_project = Delivery.objects.all()
+    results = {
+        'temp_name': temp_name,
+        'all_project': all_project,
+    }
+    return render(request, 'delivery/delivery_list.html', results)

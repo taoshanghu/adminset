@@ -43,6 +43,7 @@ class Config_Update(object):
             pass
         else:
             return {"code":1,"info":u"Undetected configuration file"}
+
     def __nginx_file_jx(self,nginx_file_path):
         """获取nginx include 引入的配置文件名"""
         with open(nginx_file_path, 'r') as f:

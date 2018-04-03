@@ -82,7 +82,7 @@
                                     <td>{{ project.deploy_policy }} </td>
                                     <td>
                                         <a href="#"><li onclick="return deploy(this.value);" class="btn btn-sm btn-default" value="{{ project.job_name_id }}">部署</li></a>
-                                        <a href="{% url "delivery_guihun" project.id %}">}"><span class="btn btn-sm btn-default">回滚</li></a>
+                                        <a href="#"><li onclick="return hueiguen(this.value);" class="btn btn-sm btn-default" value="{{ project.job_name_id }}">回滚</li></a>
                                         <a href="#"><li style="list-style-type:none" class="btn btn-sm btn-default" onclick="return tanchu(this.value)" value="{{ project.job_name_id  }}">日志</li></a>
                                         <a href="{% url "delivery_edit" project.id %}"><span class="btn btn-sm btn-default">编辑</span></a>
                                         <a href="#"><li onclick="return taskstop(this.value);" class="btn btn-sm btn-default" value="{{ project.job_name_id }}">清理</li></a>
@@ -183,7 +183,17 @@ function taskstop(args) {
         });
     }
 }
-
+function hueiguen(args) {
+    if (confirm("确定回滚到上一个版本？")) {
+        var pd = document.getElementById("progress_bar_"+args);
+        pb.style.display = "block";
+        $.get("/delivery/deploy/"+args+"/",function(data,status){
+            if(data != "ok"){
+                layer.msg(data);
+            }
+        });
+    }
+}
 </script>
 <script>
     var v1 = window.setInterval("status()",2000);

@@ -50,6 +50,7 @@ class Ansible_cmd(object):
     def __shell_copy(self,src_file,dest_file):
         shell_cmd = "ansible {0} -f {1} -m copy -a \"src={2} dest={3}\"".format(self.host_ip,self.forks,src_file,dest_file)
         cmd_exec(shell_cmd)
+
     def shell_script(self,script_cmd,logfile):
         if script_cmd == "" or script_cmd == None  or not os.path.isfile(script_cmd):
             loginfo_to_file(logfile,"{0} is not file!".format(script_cmd))
@@ -57,3 +58,16 @@ class Ansible_cmd(object):
         cmd_out = cmd_exec(shell_script_cmd)
         loginfo_to_file(logfile,"<br><h5>{0}</h5>".format(cmd_out))
         #print cmd_out
+
+    def java_pack(self,job_path, pack_path,java_war_name):
+        """ansible 执行jar 打包任务"""
+        if not os.path.exists(job_path):
+            os.makedirs(job_path)
+        if not os.path.exists(pack_path):
+            os.makedirs(pack_path)
+        if not os.path.isfile("%s/%s" % (pack_path,java_war_name)):
+            pack_path_war = "{0}/{1}".format(pack_path,java_war_name)
+            cmd = "cd {0} ; jar cfM0 {1} *".format(job_path,pack_path_war)
+            return self.shell_run(cmd)
+        else:
+            return "发布版本存在{0}，请确认？".format(java_war_name)

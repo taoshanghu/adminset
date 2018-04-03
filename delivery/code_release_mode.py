@@ -15,10 +15,10 @@ level = get_dir("log_level")
 log_path = get_dir("log_path")
 log("setup.log", level, log_path)
 
-def code_release(host_group,lvs_group,config_path,dest_path,lvs_name,logfile,code_src,code_dest,java_script,work_path,obj_name,shell_file=None,exclude=None):
+def code_release(host_group,lvs_group,config_path,dest_path,lvs_name,logfile,code_src,
+                 code_dest,java_script,work_path,obj_name,shell_file=None,exclude=None):
     """代码发布模块"""
     host_group = str_to_list(host_group)
-    print "coe1"
     new_lvs = lvs_update(config_path=config_path,
                          host_group=host_group,
                          logfile=logfile,
@@ -26,7 +26,7 @@ def code_release(host_group,lvs_group,config_path,dest_path,lvs_name,logfile,cod
                          dest_path=dest_path,
                          lvs_name=lvs_name)
     if not new_lvs:
-        return u"负载均衡更新失败"
+        return False
 
     code_rsync_dest(host_group, code_src, code_dest, java_script, work_path, obj_name, logfile, shell_file, exclude)
 
@@ -37,7 +37,7 @@ def code_release(host_group,lvs_group,config_path,dest_path,lvs_name,logfile,cod
                          dest_path=dest_path,
                          lvs_name=lvs_name)
     if not new_lvs:
-        return u"负载均衡更新失败"
+        return False
     return True
 
 
@@ -52,21 +52,21 @@ def code_rsync_dest(host_group,code_src,code_dest,java_script,work_path,obj_name
 
     java_run = java_shell(host_group)
     java_stop = java_run.java_stop(java_script)
-    loginfo_to_file(logfile, "java stop ".format(java_stop))
+    loginfo_to_file(logfile, u"停止目标主机java程序--》{0}".format(java_stop))
 
-    loginfo_to_file(logfile, "code rsync start!")
+    loginfo_to_file(logfile, u"开始代码同步至目标服务器-->{0}".format(",".join(host_group)))
     exclude_list = exclude.split(",")
     rsync_out = ansible_cmd.rsync(code_src,code_dest,exclude=exclude_list)
-    loginfo_to_file(logfile, "{0}<br>{1}".format(rsync_out,"code rsync END!"))
+    loginfo_to_file(logfile, u"{0}<br>{1}".format(rsync_out,u"代码发布完成!"))
 
     ln_tmp_to_wok(code_dest,work_path,obj_name,host_group)
-    loginfo_to_file(logfile, "{0}<br>".format("ln code_dir to wok_dir END!"))
+    loginfo_to_file(logfile, u"代码目录软件到工作目录完成！<br>")
 
     if shell_file != None and shell_file != "":
         ansible_cmd.shell_script(logfile=logfile, script_cmd=shell_file)
 
     java_run.java_start(java_script)
-    loginfo_to_file(logfile, "{0}<br>".format("java start END!"))
+    loginfo_to_file(logfile, u"java启动完成<br>")
 
     networ_test = host_network_probe(host_group, 8080)
     if "False" in networ_test:
@@ -94,11 +94,16 @@ def ln_tmp_to_wok(tmp_path,wok_path,obj_name,host_ip):
         tmp_path = "{0}/".format(tmp_path)
     if not wok_path.endswith("/"):
         wok_path = "{0}/".format(wok_path)
-    if obj_name.endswith("/"):
-        obj_name = obj_name.rstrip("/")
-    cmd = "ln -sfT {0}{2} {1}{2}".format(tmp_path,wok_path,obj_name)
+    c_obj_name = obj_name[0]
+    s_obj_name = obj_name[1]
+    if s_obj_name.endswith("/"):
+        s_obj_name = s_obj_name.rstrip("/")
+    if c_obj_name.endswith("/"):
+        c_obj_name = c_obj_name.rstrip("/")
+    cmd = "ln -sfT {0}{3} {1}{2}".format(tmp_path,wok_path,c_obj_name,s_obj_name)
     shell_cmd = Ansible_cmd(host_ip)
-    print shell_cmd.shell_run(cmd)
+    return shell_cmd.shell_run(cmd)
+
 
 def lvs_update(config_path,host_group,logfile,lvs_group,dest_path,lvs_name):
     """负载均衡配置文件更新模块"""
@@ -121,15 +126,7 @@ def lvs_update(config_path,host_group,logfile,lvs_group,dest_path,lvs_name):
     return True
 
 
-def java_Pack(job_path,pack_path):
-    if not os.path.exists(job_path):
-        return 1
-    if os.path.exists(pack_path):
-        return 2
-    os.chdir(job_path)
-    if not pack_path.endswith(".war"):
-        pack_path = "{0}.war".format(pack_path)
-    cmd = "jar cvfM0 {0} *".format(pack_path)
+
 
 
 
